@@ -104,9 +104,9 @@ node play-sound.mjs   ← hook payload 从 stdin 读入，映射到 12 个事件
 PowerShell SoundPlayer.PlaySync()   ← 独立最小化窗口播放，异步不阻塞 CLI
 ```
 
-`play-sound.mjs` 与 `sounds.json` 位于同一目录，音效路径全部相对该目录解析，因此仓库克隆到任何位置都能工作——**没有任何硬编码路径**。
+`play-sound.mjs` 与 `sounds.json` 位于同一目录，音效路径全部相对该目录解析，因此仓库克隆到任何位置都能工作。
 
-注册的 6 个 hook（`PreToolUse(AskUserQuestion)`、`PermissionRequest`、`SessionStart`、`SessionEnd`、`Stop`、`UserPromptSubmit`）覆盖了最常用的提示场景；其余事件（提问已回答、任务失败、工具出错、中断、子代理启停）已在管理器中可配置，默认关闭或复用同一注册链路。
+注册的 6 个 hook（`PreToolUse(AskUserQuestion)`、`PermissionRequest`、`SessionStart`、`SessionEnd`、`Stop`、`UserPromptSubmit`）覆盖了最常用的提示场景；其余事件（提问已回答、任务失败、工具出错、中断、子代理启停）也可在管理器中配置，默认关闭。
 
 ## 添加自己的音效
 
@@ -119,17 +119,17 @@ PowerShell SoundPlayer.PlaySync()   ← 独立最小化窗口播放，异步不�
 - [Mixkit](https://mixkit.co/free-sound-effects/) —— Mixkit License，免费可商用；
 - [Pixabay](https://pixabay.com/sound-effects/) —— Pixabay Content License，免费可商用。
 
-> ⚠️ 下载的素材**不要提交进 git**。本仓库 `.gitignore` 已默认排除 `sounds/Anime/`；其他专辑请自行添加排除规则。
-
 非 WAV 格式请先转码：`ffmpeg -i input.mp3 -ar 44100 -ac 2 -c:a pcm_s16le output.wav`
 
-## 可选动漫音效包
+## 动漫音效包（可选）
+
+喜欢动漫风格的提示音，可以运行仓库自带的下载脚本（需要 ffmpeg）：
 
 ```bash
 node tools/download-pack.mjs
 ```
 
-从効果音ラボ下载 16 个动漫语音/音效并转码为 WAV，输出到 `sounds/Anime/`。运行时会先展示版权提示并要求输入 `y` 确认。下载的素材禁止再分发，仅供本机个人使用（该目录已被 `.gitignore` 排除）。
+脚本会从効果音ラボ下载 16 个动漫语音/音效并转码为 WAV，保存到 `sounds/Anime/`，之后在管理器中选择 Anime 专辑即可使用。这些素材仅供个人使用、禁止再分发，请遵守効果音ラボ的使用条款。
 
 ## 卸载
 
@@ -144,12 +144,12 @@ node tools/download-pack.mjs
 
 ## 同类项目
 
-- [peon-ping](https://github.com/PeonPing/peon-ping)（5k+★）—— 面向 Claude Code/Codex/IDE 的游戏角色语音通知，跨平台、音效包生态丰富；
-- [clawd-on-desk](https://github.com/rullerzhou-afk/clawd-on-desk)（6k+★）—— 盯着 AI coding agent 的像素桌面宠物，音效只是其提醒手段之一；
+- [peon-ping](https://github.com/PeonPing/peon-ping) —— 面向 Claude Code/Codex/IDE 的游戏角色语音通知，跨平台、音效包生态丰富；
+- [clawd-on-desk](https://github.com/rullerzhou-afk/clawd-on-desk) —— 盯着 AI coding agent 的像素桌面宠物，音效只是其提醒手段之一；
 - [echook](https://github.com/ChanMeng666/echook) —— Claude Code/Cursor/Codex 的音频通知，26 个 hook、TTS、webhook；
-- `claude-code-hooks-sound-system`、`bugu` 等 —— 均为 Claude Code 生态的 hook 音效方案。
+- [claude-code-hooks-sound-system](https://github.com/PCPrincipal67/claude-code-hooks-sound-system)、[bugu](https://github.com/LearnPrompt/bugu) —— Claude Code 生态的 hook 音效方案。
 
-本项目的差异：**面向 Kimi Code 原生 hooks**（非 Claude Code）、**自带零依赖可视化管理 UI**（选音效/试听/保存全自动备份）、**Windows 优先**（bat 一键安装，PowerShell 播放链路针对 GUI/headless 父进程做过适配）。
+本项目的差异：**面向 Kimi Code 原生 hooks**（非 Claude Code）、**自带零依赖可视化管理 UI**（选音效/试听/保存全自动备份）、**Windows 优先**（bat 一键安装/卸载，双击即用）。
 
 ## License
 
@@ -161,6 +161,6 @@ node tools/download-pack.mjs
 
 ### English summary
 
-**kimi-sound-hook** adds sound effects to [Kimi Code](https://github.com/MoonshotAI/kimi-code) CLI lifecycle events (task done, user input, session start/end, permission requests, questions, errors, subagent start/stop) via its native `[[hooks]]` system. It ships with a zero-dependency local web manager (port 23177) to pick, preview and assign sounds per event, six original ffmpeg-synthesized starter WAVs (MIT), double-click Windows installers/uninstallers with automatic timestamped config backups, and an optional downloader for a 16-sound anime pack (personal use only). Windows-first (PowerShell `SoundPlayer` backend), Node.js >= 18, no npm dependencies. Paths are derived relative to the repo root, so it works from any clone location.
+**kimi-sound-hook** adds sound effects to [Kimi Code](https://github.com/MoonshotAI/kimi-code) CLI lifecycle events (task done, user input, session start/end, permission requests, questions, errors, subagent start/stop) via its native `[[hooks]]` system. It ships with a zero-dependency local web manager (port 23177) to pick, preview and assign sounds per event, six original program-synthesized starter WAVs (MIT), double-click Windows installers/uninstallers with automatic timestamped config backups, and an optional downloader for a 16-sound anime pack (personal use only). Windows-first (PowerShell `SoundPlayer` backend), Node.js >= 18, no npm dependencies. Paths are derived relative to the repo root, so it works from any clone location.
 
-One-line install on Windows (paste into PowerShell or Windows Terminal): `powershell -ExecutionPolicy Bypass -Command "iex (irm https://raw.githubusercontent.com/Yang-ChenRui/kimi-sound-hook/main/install-remote.ps1)"`. (Some security tools block the `irm ... | iex` pipe form; the `iex (irm ...)` form above passes. If it is still blocked, download `install-remote.bat` manually instead.) The script downloads the repo to `%USERPROFILE%\kimi-sound-hook`, registers the hooks, and preserves your custom `sounds.json` and `sounds/` when upgrading. Afterwards double-click `音效管理.bat` (or `sound-manager.bat`) in the install folder to open the sound manager.
+One-line install on Windows (paste into PowerShell or Windows Terminal): `powershell -ExecutionPolicy Bypass -Command "iex (irm https://raw.githubusercontent.com/Yang-ChenRui/kimi-sound-hook/main/install-remote.ps1)"`. The script downloads the repo to `%USERPROFILE%\kimi-sound-hook`, registers the hooks, and preserves your custom `sounds.json` and `sounds/` when upgrading. Some security tools block the `irm ... | iex` pipe form; if that happens, use the `iex (irm ...)` form above or download `install-remote.bat` manually. Afterwards double-click `音效管理.bat` (or `sound-manager.bat`) in the install folder to open the sound manager.
