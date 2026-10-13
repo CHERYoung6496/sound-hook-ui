@@ -3,7 +3,8 @@
   kimi-sound-hook 一键远程安装脚本（Windows / PowerShell 5.1+）
 
 .DESCRIPTION
-  从 GitHub 下载仓库压缩包 → 解压到 %USERPROFILE%\kimi-sound-hook → 注册 Kimi Code 音效 hooks。
+  从 GitHub 下载仓库压缩包 → 解压到 %USERPROFILE%\kimi-sound-hook → 自动检测已安装的 agent 工具
+  （kimi / claude / codex / gemini / cursor / continue）并注册音效 hooks。
   重复运行即升级：自动备份并恢复你的 sounds.json 与 sounds\ 目录（自定义专辑与音效选择不会丢），
   旧目录改名为 kimi-sound-hook.old-<时间戳> 留作兜底。
 
@@ -166,7 +167,7 @@ if ($IsUpgrade) {
 # --- [4/5] 注册 hooks ----------------------------------------------------------
 
 Write-Host ''
-Write-Host '[4/5] 注册 Kimi Code 音效 hooks（node install.mjs） ...' -ForegroundColor Cyan
+Write-Host '[4/5] 检测已安装的 agent 工具并注册音效 hooks（node install.mjs） ...' -ForegroundColor Cyan
 & node (Join-Path $TargetDir 'install.mjs')
 if ($LASTEXITCODE -ne 0) {
   Fail "install.mjs 运行失败（退出码 $LASTEXITCODE），请查看上方输出定位原因。"
@@ -187,13 +188,22 @@ Write-Host ' [完成] kimi-sound-hook 安装成功！' -ForegroundColor Green
 Write-Host '============================================================' -ForegroundColor Green
 Write-Host " 安装目录：$TargetDir"
 Write-Host ''
+Write-Host ' 支持的 agent 工具（6 种）：kimi（Kimi Code）、claude（Claude Code）、'
+Write-Host '   codex（Codex CLI）、gemini（Gemini CLI）、cursor（Cursor）、'
+Write-Host '   continue（Continue cn CLI）。'
+Write-Host '   上方 install.mjs 的输出列出了实际检测到并已注册 hooks 的工具。'
+Write-Host ''
 Write-Host ' 下一步：'
 Write-Host '   1. 双击安装目录里的「音效管理.bat」，打开可视化管理器挑选/试听音效；'
-Write-Host '   2. 新开一个 Kimi Code 会话，hooks 即生效（会话开始、任务完成、'
+Write-Host '   2. 新开一个已注册工具的会话，hooks 即生效（会话开始、任务完成、'
 Write-Host '      请求审批等事件都会播放提示音）。'
 Write-Host ''
+Write-Host ' 注意事项：'
+Write-Host '   - Codex CLI 用户：需在 TUI 中执行 /hooks 信任本项目注册的 hooks 后才会生效；'
+Write-Host '   - Cursor 用户：hooks 配置支持热重载，无需重启即可生效。'
+Write-Host ''
 Write-Host ' 卸载方法：双击安装目录里的「uninstall.bat」'
-Write-Host '           （自动备份后从 config.toml 移除音效 hooks，其余配置不动）。'
+Write-Host '           （自动备份后从各工具配置中移除音效 hooks，其余配置不动）。'
 Write-Host " 项目主页：$RepoUrl"
 Write-Host ''
 exit 0

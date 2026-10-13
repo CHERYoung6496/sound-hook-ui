@@ -1,6 +1,6 @@
 @echo off
 setlocal
-rem Kimi Code sound manager launcher (English-named copy of 音效管理.bat).
+rem kimi-sound-hook sound manager launcher (English-named copy of 音效管理.bat).
 rem If the port is already LISTENING, the server is running -> just open the browser.
 
 if "%SOUND_MANAGER_PORT%"=="" set "SOUND_MANAGER_PORT=23177"

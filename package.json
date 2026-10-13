@@ -1,9 +1,17 @@
 {
   "name": "kimi-sound-hook",
-  "version": "0.1.0",
-  "description": "Sound hooks for Kimi Code with a zero-dependency web manager (Windows-first)",
+  "version": "0.2.0",
+  "description": "Sound hooks for Kimi Code, Claude Code, Codex, Gemini CLI, Cursor and Continue — with a zero-dependency web manager (Windows-first)",
   "license": "MIT",
   "type": "module",
+  "keywords": [
+    "kimi-code",
+    "claude-code",
+    "codex",
+    "gemini-cli",
+    "cursor",
+    "agent-hooks"
+  ],
   "scripts": {
     "start": "node manager/server.mjs"
   },

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// Kimi Code 音效管理器 —— 零依赖本地 Web 服务
-// 只读写仓库根目录下的 sounds.json，不修改 play-sound.mjs。
+// Agent 音效管理器 —— 零依赖本地 Web 服务
+// kimi-sound-hook 支持 Kimi Code / Claude Code / Codex CLI / Gemini CLI / Cursor / Continue；
+// 本管理器与具体 agent 工具无关，只读写仓库根目录下的 sounds.json，不修改 play-sound.mjs。
 // 所有路径均相对于仓库根目录自动推导，无任何硬编码绝对路径。
 
 import http from 'node:http';
@@ -46,6 +47,8 @@ const EVENTS = [
   { key: 'subagent_stop', label: '子代理结束', desc: '子代理完成（SubagentStop hook）' },
 ];
 
+// 预览（试听）用的通用 payload 格式：hook_event_name 为 kimi 风格事件名，
+// play-sound.mjs 向后兼容该格式，各 agent 工具的事件名会由播放器统一映射。
 const EVENT_PAYLOADS = {
   agent_end: { hook_event_name: 'Stop' },
   input: { hook_event_name: 'UserPromptSubmit' },

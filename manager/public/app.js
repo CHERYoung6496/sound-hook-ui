@@ -1,4 +1,4 @@
-/* Kimi Code 音效管理器前端逻辑（零依赖，原生 ES） */
+/* Agent 音效管理器前端逻辑（零依赖，原生 ES） */
 'use strict';
 
 const $ = (sel, root = document) => root.querySelector(sel);

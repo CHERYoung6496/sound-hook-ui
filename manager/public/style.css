@@ -1,4 +1,4 @@
-/* Kimi Code 音效管理器样式 */
+/* Agent 音效管理器样式 */
 :root {
   --bg: #f3f5f9;
   --card: #ffffff;
@@ -41,11 +41,16 @@ body {
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--border);
 }
-.topbar h1 {
+.topbar .brand { margin-right: auto; }
+.topbar .brand h1 {
   margin: 0;
   font-size: 17px;
   font-weight: 700;
-  margin-right: auto;
+}
+.topbar .subtitle {
+  margin: 1px 0 0;
+  font-size: 11px;
+  color: var(--muted);
 }
 .topbar-controls {
   display: flex;

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Kimi Code CLI sound hook player
+// Multi-tool agent CLI sound hook player (kimi/claude/codex/gemini/cursor/continue)
 // Reads hook payload from stdin, maps events to pi-sound-style names,
 // and plays the configured .wav sound asynchronously.
 
@@ -19,13 +19,17 @@ function log(line) {
   } catch {}
 }
 
-/**
- * Map Kimi hook events to the event names used in sounds.json.
- */
-function mapEvent(payload) {
-  const event = payload?.hook_event_name;
-  const toolName = payload?.tool_name;
+const TOOL_IDS = ['kimi', 'claude', 'codex', 'gemini', 'cursor', 'continue'];
 
+// Event values only emitted by Gemini CLI (used for payload-based inference).
+const GEMINI_ONLY_EVENTS = new Set([
+  'BeforeAgent', 'AfterAgent', 'Notification', 'BeforeTool', 'AfterTool', 'PreCompress',
+]);
+
+// Per-tool event mappers: (event, toolName, payload) => sounds.json event name or null.
+// `event` is always payload.hook_event_name across all supported tools.
+
+function mapKimiEvent(event, toolName) {
   if (event === 'PreToolUse' && toolName === 'AskUserQuestion') {
     return 'ask_user_question:start';
   }
@@ -43,6 +47,79 @@ function mapEvent(payload) {
   if (event === 'SubagentStart') return 'subagent_start';
   if (event === 'SubagentStop') return 'subagent_stop';
   return null;
+}
+
+function mapClaudeEvent(event, toolName) {
+  if (event === 'Notification') return 'permission_request';
+  if (event === 'Interrupt') return null;
+  return mapKimiEvent(event, toolName);
+}
+
+function mapCodexEvent(event) {
+  if (event === 'Stop') return 'agent_end';
+  if (event === 'SessionStart') return 'session_start';
+  if (event === 'SessionEnd') return 'session_end';
+  if (event === 'UserPromptSubmit') return 'input';
+  if (event === 'PermissionRequest') return 'permission_request';
+  if (event === 'Interrupt') return 'interrupt';
+  if (event === 'SubagentStart') return 'subagent_start';
+  if (event === 'SubagentStop') return 'subagent_stop';
+  return null;
+}
+
+function mapGeminiEvent(event, toolName, payload) {
+  if (event === 'AfterAgent') return 'agent_end';
+  if (event === 'BeforeAgent') return 'input';
+  if (event === 'SessionStart') return 'session_start';
+  if (event === 'SessionEnd') return 'session_end';
+  if (event === 'Notification') {
+    return payload?.notification_type === 'ToolPermission' ? 'permission_request' : null;
+  }
+  if (event === 'AfterTool') {
+    const response = payload?.tool_response;
+    const hasError = response !== null && typeof response === 'object' && 'error' in response;
+    return hasError ? 'tool_execution_error' : null;
+  }
+  return null;
+}
+
+function mapCursorEvent(event, toolName, payload) {
+  if (event === 'stop') {
+    if (payload?.status === 'aborted') return 'interrupt';
+    if (payload?.status === 'error') return 'agent_end_failure';
+    return 'agent_end';
+  }
+  if (event === 'sessionStart') return 'session_start';
+  if (event === 'sessionEnd') return 'session_end';
+  if (event === 'beforeSubmitPrompt') return 'input';
+  if (event === 'postToolUseFailure') return 'tool_execution_error';
+  return null;
+}
+
+const EVENT_MAPPERS = {
+  kimi: mapKimiEvent,
+  claude: mapClaudeEvent,
+  codex: mapCodexEvent,
+  gemini: mapGeminiEvent,
+  cursor: mapCursorEvent,
+  continue: mapClaudeEvent,
+};
+
+function parseToolArg(argv) {
+  const idx = argv.indexOf('--tool');
+  if (idx === -1) return null;
+  const id = argv[idx + 1];
+  return TOOL_IDS.includes(id) ? id : null;
+}
+
+// Infer the tool from the event value when --tool is absent: cursor uses
+// camelCase, Gemini has its own PascalCase set, everything else falls back
+// to the shared kimi/claude mapping (backwards compatible with old installs).
+function inferTool(event) {
+  if (typeof event !== 'string' || event === '') return 'kimi';
+  if (/^[a-z]/.test(event)) return 'cursor';
+  if (GEMINI_ONLY_EVENTS.has(event)) return 'gemini';
+  return 'kimi';
 }
 
 function readStdin() {
@@ -92,14 +169,19 @@ function playSound(filePath) {
 
 async function main() {
   const payload = await readStdin();
-  log(`received payload event=${payload?.hook_event_name} tool=${payload?.tool_name}`);
+  const event = payload?.hook_event_name;
+  const toolName = payload?.tool_name;
 
-  const eventName = mapEvent(payload);
+  const argTool = parseToolArg(process.argv.slice(2));
+  const tool = argTool ?? inferTool(event);
+  log(`received payload event=${event} tool=${toolName} hook_tool=${tool}${argTool ? '' : ' (inferred)'}`);
+
+  const eventName = EVENT_MAPPERS[tool](event, toolName, payload);
   if (!eventName) {
-    log('no mapped event, skipping');
+    log(`no mapped event for hook_tool=${tool}, skipping`);
     return;
   }
-  log(`mapped to ${eventName}`);
+  log(`mapped to ${eventName} (hook_tool=${tool})`);
 
   let config;
   try {
