@@ -2,7 +2,7 @@
 // kimi-sound-hook 安装器：把 6 个音效 hook 注册进 Kimi Code 的 config.toml。
 // 零依赖 Node ESM 脚本，幂等，可重复运行。
 
-import { copyFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import os from 'node:os';
@@ -57,6 +57,7 @@ if (existsSync(CONFIG_PATH)) {
   }
 } else {
   try {
+    mkdirSync(dirname(CONFIG_PATH), { recursive: true });
     writeFileSync(CONFIG_PATH, SKELETON, 'utf8');
     console.log('  配置文件不存在，已创建骨架文件。');
     original = SKELETON;
