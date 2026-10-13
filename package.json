@@ -1,0 +1,13 @@
+{
+  "name": "kimi-sound-hook",
+  "version": "0.1.0",
+  "description": "Sound hooks for Kimi Code with a zero-dependency web manager (Windows-first)",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "start": "node manager/server.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

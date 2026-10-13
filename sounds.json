@@ -1,0 +1,73 @@
+{
+  "enabled": true,
+  "creator": "kimi-sound-hook",
+  "album": "Starter",
+  "album_emoji": "🔔",
+  "album_visible": true,
+  "events": {
+    "agent_end": {
+      "mode": "single",
+      "sounds": [
+        "sounds/starter/done-fanfare.wav"
+      ]
+    },
+    "input": {
+      "mode": "single",
+      "sounds": [
+        "sounds/starter/input-blip.wav"
+      ]
+    },
+    "session_start": {
+      "mode": "single",
+      "sounds": [
+        "sounds/starter/start-chime.wav"
+      ]
+    },
+    "session_end": {
+      "mode": "single",
+      "sounds": [
+        "sounds/starter/end-chime.wav"
+      ]
+    },
+    "permission_request": {
+      "mode": "single",
+      "sounds": [
+        "sounds/starter/question-ding.wav"
+      ]
+    },
+    "ask_user_question:start": {
+      "mode": "single",
+      "sounds": [
+        "sounds/starter/question-ding.wav"
+      ]
+    },
+    "ask_user_question:result": {
+      "mode": "disabled",
+      "sounds": []
+    },
+    "agent_end_failure": {
+      "mode": "single",
+      "sounds": [
+        "sounds/starter/error-buzz.wav"
+      ]
+    },
+    "tool_execution_error": {
+      "mode": "single",
+      "sounds": [
+        "sounds/starter/error-buzz.wav"
+      ]
+    },
+    "interrupt": {
+      "mode": "disabled",
+      "sounds": []
+    },
+    "subagent_start": {
+      "mode": "disabled",
+      "sounds": []
+    },
+    "subagent_stop": {
+      "mode": "disabled",
+      "sounds": []
+    }
+  }
+}

@@ -1,0 +1,14 @@
+# 配置与备份
+sounds.json.*.bak
+sound-debug.log
+
+# 系统/日志
+*.log
+Thumbs.db
+Desktop.ini
+
+# 依赖（本项目零依赖，仅为保险）
+node_modules/
+
+# 用户自行下载的音效素材（许可禁止再分发，请勿提交）
+sounds/Anime/

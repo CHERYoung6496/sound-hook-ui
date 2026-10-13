@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kimi Code 音效管理器</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <h1>🔊 Kimi Code 音效管理器</h1>
+  <div class="topbar-controls">
+    <label class="switch-wrap" title="全局总开关：关闭后所有 hook 事件都不播放声音">
+      <span class="switch-label">全局启用</span>
+      <input type="checkbox" id="enabledToggle">
+      <span class="switch" aria-hidden="true"></span>
+    </label>
+    <label class="field" title="当前使用的专辑名（写入 sounds.json 的 album 字段）">
+      <span>专辑</span>
+      <input type="text" id="albumInput" placeholder="如 Anime" autocomplete="off">
+    </label>
+    <label class="field field-emoji" title="专辑对应的表情符号（写入 album_emoji 字段）">
+      <span>Emoji</span>
+      <input type="text" id="emojiInput" maxlength="8" placeholder="🌸" autocomplete="off">
+    </label>
+    <button type="button" id="saveBtn" class="btn primary" disabled>保存</button>
+    <button type="button" id="shutdownBtn" class="btn danger">关闭服务器</button>
+  </div>
+</header>
+
+<div id="banner" class="banner" hidden></div>
+
+<main id="grid" class="grid">
+  <p class="loading">正在加载配置…</p>
+</main>
+
+<div id="pickerOverlay" class="overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <strong id="pickerTitle">添加音效</strong>
+      <button type="button" class="btn icon" id="pickerClose" title="关闭（Esc）">✕</button>
+    </div>
+    <div class="modal-body">
+      <aside id="albumTabs" class="album-tabs"></aside>
+      <section class="picker-main">
+        <input type="search" id="pickerSearch" placeholder="搜索文件名…" autocomplete="off">
+        <div id="pickerList" class="picker-list"></div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<script src="/app.js"></script>
+</body>
+</html>
