@@ -10,7 +10,7 @@
 .EXAMPLE
   用法（一行命令，在 PowerShell 或 Windows Terminal 中粘贴执行）：
 
-  powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/Yang-ChenRui/kimi-sound-hook/main/install-remote.ps1 | iex"
+  powershell -ExecutionPolicy Bypass -Command "iex (irm https://raw.githubusercontent.com/Yang-ChenRui/kimi-sound-hook/main/install-remote.ps1)"
 
 .EXAMPLE
   可选参数（一般不需要）：不联网，直接用本地仓库压缩包安装（离线/测试用）

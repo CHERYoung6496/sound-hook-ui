@@ -31,8 +31,10 @@
 Windows 下右键开始菜单，打开「Windows PowerShell」（或 Windows Terminal），粘贴下面一行并回车：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/Yang-ChenRui/kimi-sound-hook/main/install-remote.ps1 | iex"
+powershell -ExecutionPolicy Bypass -Command "iex (irm https://raw.githubusercontent.com/Yang-ChenRui/kimi-sound-hook/main/install-remote.ps1)"
 ```
+
+> 提示：部分安全软件会拦截 `irm ... | iex` 这种管道写法（报「拒绝访问 / Permission denied」）。上面的 `iex (irm ...)` 写法可以正常通过；若仍被拦截，改用下方「方式 B」手动下载即可。
 
 这一行命令会自动完成：
 
@@ -161,4 +163,4 @@ node tools/download-pack.mjs
 
 **kimi-sound-hook** adds sound effects to [Kimi Code](https://github.com/MoonshotAI/kimi-code) CLI lifecycle events (task done, user input, session start/end, permission requests, questions, errors, subagent start/stop) via its native `[[hooks]]` system. It ships with a zero-dependency local web manager (port 23177) to pick, preview and assign sounds per event, six original ffmpeg-synthesized starter WAVs (MIT), double-click Windows installers/uninstallers with automatic timestamped config backups, and an optional downloader for a 16-sound anime pack (personal use only). Windows-first (PowerShell `SoundPlayer` backend), Node.js >= 18, no npm dependencies. Paths are derived relative to the repo root, so it works from any clone location.
 
-One-line install on Windows (paste into PowerShell or Windows Terminal): `powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/Yang-ChenRui/kimi-sound-hook/main/install-remote.ps1 | iex"`. The script downloads the repo to `%USERPROFILE%\kimi-sound-hook`, registers the hooks, and preserves your custom `sounds.json` and `sounds/` when upgrading. Afterwards double-click `音效管理.bat` (or `sound-manager.bat`) in the install folder to open the sound manager.
+One-line install on Windows (paste into PowerShell or Windows Terminal): `powershell -ExecutionPolicy Bypass -Command "iex (irm https://raw.githubusercontent.com/Yang-ChenRui/kimi-sound-hook/main/install-remote.ps1)"`. (Some security tools block the `irm ... | iex` pipe form; the `iex (irm ...)` form above passes. If it is still blocked, download `install-remote.bat` manually instead.) The script downloads the repo to `%USERPROFILE%\kimi-sound-hook`, registers the hooks, and preserves your custom `sounds.json` and `sounds/` when upgrading. Afterwards double-click `音效管理.bat` (or `sound-manager.bat`) in the install folder to open the sound manager.
