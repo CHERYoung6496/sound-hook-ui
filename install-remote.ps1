@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
   kimi-sound-hook 一键远程安装脚本（Windows / PowerShell 5.1+）
 
