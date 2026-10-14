@@ -1,7 +1,7 @@
 @echo off
-rem kimi-sound-hook multi-tool uninstaller launcher (double-click friendly).
+rem sound-hook-ui multi-tool uninstaller launcher (double-click friendly).
 rem No args: remove hooks from all supported agent tools
-rem (kimi / claude / codex / gemini / cursor / continue).
+rem (kimi / claude / codex / gemini / cursor / continue / deepseek / pi).
 rem Args are passed through to uninstall.mjs, e.g.:
 rem   uninstall.bat --tool kimi --tool claude
 rem   uninstall.bat --tool kimi,claude

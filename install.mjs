@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-// kimi-sound-hook 安装器：把音效 hooks 注册进各 agent 工具的配置文件。
+// sound-hook-ui 安装器：把音效 hooks 注册进各 agent 工具的配置文件。
 // 零依赖 Node ESM 脚本，幂等，可重复运行；写入前必做带时间戳的 .bak 备份。
 // 用法：
 //   node install.mjs                        自动检测已安装的工具并逐一注册（一个都没检测到则默认装 kimi）
-//   node install.mjs --tool kimi,claude     只装指定工具（--tool 可多次使用或逗号分隔）
+//   node install.mjs --tool kimi,claude     只装指定工具（--tool 可多次使用或逗号分隔，--list 查看全部 8 个）
 //   node install.mjs --list                 列出全部支持的工具及检测/安装状态
 
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -37,7 +37,7 @@ try {
   fail(err.message);
 }
 
-console.log('[kimi-sound-hook] 安装程序');
+console.log('[sound-hook-ui] 安装程序');
 console.log(`  播放器路径：${PLAYER_PATH}`);
 
 // --- --list：列出全部工具及状态 ---------------------------------------------------
@@ -83,32 +83,43 @@ for (const tool of targets) {
   console.log(`  配置文件：${configPath}`);
   try {
     let original;
+    let createdSkeleton = false;
     if (existsSync(configPath)) {
       original = readFileSync(configPath, 'utf8');
     } else {
       mkdirSync(dirname(configPath), { recursive: true });
       original = tool.skeleton;
       writeFileSync(configPath, original, 'utf8');
+      createdSkeleton = true;
       console.log('  配置文件不存在，已创建骨架文件。');
     }
 
     if (tool.isInstalled(original)) {
-      console.log('[已安装] 配置中已存在 play-sound.mjs 的 hook，跳过该工具。');
+      console.log('[已安装] 配置中已存在本项目的 hook，跳过该工具。');
       skippedCount += 1;
       continue;
     }
 
-    const backupPath = `${configPath}.${timestampName(new Date())}.bak`;
-    copyFileSync(configPath, backupPath);
-    console.log(`  已备份原配置：${backupPath}`);
+    if (!createdSkeleton) {
+      // 骨架文件是刚创建的，没有用户配置需要备份
+      const backupPath = `${configPath}.${timestampName(new Date())}.bak`;
+      copyFileSync(configPath, backupPath);
+      console.log(`  已备份原配置：${backupPath}`);
+    }
 
     writeFileSync(configPath, tool.merge(original, PLAYER_PATH), 'utf8');
     console.log(`[完成] 已注册 ${tool.eventNames.length} 个音效 hook：${tool.eventNames.join('、')}`);
     installedCount += 1;
     installedTools.push(tool);
   } catch (err) {
-    failedCount += 1;
-    console.error(`[安装失败] ${tool.id}：${err.message}`);
+    if (err.skipTool) {
+      // 适配器主动放弃（如配置文件结构无法安全合并）：打印中文警告并跳过，不计为失败
+      skippedCount += 1;
+      console.error(`[警告] ${tool.id}：${err.message}（已跳过该工具）`);
+    } else {
+      failedCount += 1;
+      console.error(`[安装失败] ${tool.id}：${err.message}`);
+    }
   }
 }
 

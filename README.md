@@ -1,10 +1,10 @@
-# kimi-sound-hook
+# sound-hook-ui
 
-**多 agent 工具通用的 hook 音效系统 + 可视化管理器**：给 Kimi Code、Claude Code、Codex、Gemini CLI、Cursor、Continue 等 AI 编程工具的生命周期事件（任务完成、提交输入、会话开始/结束、权限审批、向你提问……）配上提示音，并用一个零依赖的本地 Web 界面挑选、试听、管理音效。
+**多 agent 工具通用的 hook 音效系统 + 可视化管理器**：给 Kimi Code、Claude Code、Codex、Gemini CLI、Cursor、Continue、DeepSeek Harness、Pi 等 AI 编程工具的生命周期事件（任务完成、提交输入、会话开始/结束、权限审批、向你提问……）配上提示音，并用一个零依赖的本地 Web 界面挑选、试听、管理音效。
 
 ## 特性
 
-- 🧰 **多 agent 工具支持**：一套音效配置同时接入 6 个工具——Kimi Code、Claude Code、Codex CLI、Gemini CLI、Cursor、Continue；安装器自动检测本机已装哪些并全部注册
+- 🧰 **多 agent 工具支持**：一套音效配置同时接入 8 个工具——Kimi Code、Claude Code、Codex CLI、Gemini CLI、Cursor、Continue、DeepSeek Harness、Pi；安装器自动检测本机已装哪些并全部注册
 - 🔔 **12 个通用事件**：任务完成、提交输入、会话开始/结束、权限审批、提问/回答、任务失败、工具出错、中断、子代理启停；各工具原生事件由播放器自动归一化
 - 🖱 **可视化管理器**：零依赖本地 Web UI（默认端口 23177），点选音效、浏览器内试听、真实链路试听、单音/随机/关闭三种模式
 - 📦 **内置原创音效**：`sounds/starter/` 6 个程序合成的 WAV（MIT），开箱即用
@@ -33,8 +33,10 @@
 | Gemini CLI | `gemini` | `~/.gemini/settings.json` | JSON |
 | Cursor | `cursor` | `~/.cursor/hooks.json` | JSON |
 | Continue | `continue` | `~/.continue/settings.json` | JSON |
+| DeepSeek Harness | `deepseek` | 桥接插件 `@deepseek-ai/dsh-hooks-claude-code` 的 `hooks.json` + `~/.dsh/profiles/web/cordis.patch.yml`（可用 `DSH_HOME` 覆盖） | Claude Code 方言 JSON + YAML 补丁 |
+| Pi | `pi` | `~/.pi/agent/extensions/sound-hook-ui/index.ts`（可用 `PI_HOME` 覆盖） | TypeScript 扩展 |
 
-所有工具注册的 hook 命令统一为 `node "<play-sound.mjs 绝对路径>" --tool <标识>`；payload 一律从 stdin 以 JSON 读入，播放器按各工具的事件名自动归一化到统一的 12 个事件。
+所有工具注册的 hook（Pi 为扩展胶水）统一调用 `node "<play-sound.mjs 绝对路径>" --tool <标识>`；payload 一律以 JSON 传给播放器，播放器按各工具的事件名自动归一化到统一的 12 个事件。
 
 各工具注意事项：
 
@@ -44,6 +46,8 @@
 - **Gemini CLI**：需要 **v0.26.0 及以上**版本才有 hooks 支持。
 - **Cursor**：配置文件保存即热重载，无需重启；Cursor 没有独立的权限请求事件，`permission_request` 音效在 Cursor 下不会触发。
 - **Continue**：开箱即用。
+- **DeepSeek Harness**：需要先安装官方桥接插件：`dsh plugin --profile web add @deepseek-ai/dsh-hooks-claude-code`；注意 dsh 目前处于 developer preview，后续版本可能有 breaking changes。
+- **Pi**：安装后重启 pi 或执行 `/reload` 生效。
 
 更详细的配置位置、注册方式与限制见 [docs/supported-tools.md](docs/supported-tools.md)。
 
@@ -59,12 +63,16 @@
 | Gemini CLI | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ |
 | Cursor | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | ❌ |
 | Continue | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| DeepSeek Harness | ✅ | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Pi | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ |
 
 说明：
 
 - **Codex** 没有工具执行出错与向用户提问的 hook 事件。
 - **Cursor** 没有权限请求、提问与子代理事件；其 `stop` 事件的 `status` 字段可区分结局——`error` 映射为任务失败（`agent_end_failure`），`aborted` 映射为中断（`interrupt`）。
 - **Gemini CLI** 没有提问与子代理事件。
+- **DeepSeek Harness** 通过官方桥接插件接入，桥接仅提供 SessionStart、UserPromptSubmit、PreToolUse、PostToolUse、Stop、SubagentStart、SubagentStop 七个事件，其余事件（会话结束、权限请求、提问、工具出错、中断）不会触发。
+- **Pi** 没有内置权限系统与提问工具，也没有中断与子代理事件；任务完成对应 `agent_settled`，提交输入对应 `input`，工具出错由 `tool_execution_end` 事件的 `isError` 字段判定。
 - 标 ❌ 的事件在该工具下不会触发，但不影响其余事件的使用；管理器中仍可为它们配置音效，只是该工具永远不会播放。
 
 ## 快速开始
@@ -76,7 +84,7 @@
 Windows 下右键开始菜单，打开「Windows PowerShell」（或 Windows Terminal），粘贴下面一行并回车：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -Command "iex (irm https://raw.githubusercontent.com/Yang-ChenRui/kimi-sound-hook/main/install-remote.ps1)"
+powershell -ExecutionPolicy Bypass -Command "iex (irm https://raw.githubusercontent.com/CHERYoung6496/sound-hook-ui/main/install-remote.ps1)"
 ```
 
 > 提示：部分安全软件会拦截 `irm ... | iex` 这种管道写法（报「拒绝访问 / Permission denied」）。上面的 `iex (irm ...)` 写法可以正常通过；若仍被拦截，改用下方「方式 B」手动下载即可。
@@ -84,19 +92,19 @@ powershell -ExecutionPolicy Bypass -Command "iex (irm https://raw.githubusercont
 这一行命令会自动完成：
 
 1. 检查 Node.js >= 18（缺失或过旧时给出安装指引并停止）；
-2. 从 GitHub 下载仓库压缩包，解压到 `%USERPROFILE%\kimi-sound-hook`；
+2. 从 GitHub 下载仓库压缩包，解压到 `%USERPROFILE%\sound-hook-ui`；
 3. 运行安装器 `install.mjs`：检测本机已装的 agent 工具，把 hooks 注册进它们各自的配置文件；
 4. 打印下一步指引。
 
-**升级**：再次运行同一行命令即可。目录已存在时，脚本会先把你的 `sounds.json` 和 `sounds/` 备份出来，装好新版后再原样放回——自定义专辑与音效选择全部保留；旧目录会改名为 `kimi-sound-hook.old-<时间戳>` 留作兜底。
+**升级**：再次运行同一行命令即可。目录已存在时，脚本会先把你的 `sounds.json` 和 `sounds/` 备份出来，装好新版后再原样放回——自定义专辑与音效选择全部保留；旧目录会改名为 `sound-hook-ui.old-<时间戳>` 留作兜底。
 
-装完后**双击 `%USERPROFILE%\kimi-sound-hook\音效管理.bat`** 打开可视化管理器换音效，然后新开一个 agent 会话即可听到提示音。
+装完后**双击 `%USERPROFILE%\sound-hook-ui\音效管理.bat`** 打开可视化管理器换音效，然后新开一个 agent 会话即可听到提示音。
 
 ### 方式 B：手动安装（git 用户）
 
 ```bash
-git clone https://github.com/Yang-ChenRui/kimi-sound-hook.git
-cd kimi-sound-hook
+git clone https://github.com/CHERYoung6496/sound-hook-ui.git
+cd sound-hook-ui
 ```
 
 然后**双击 `install.bat`**（或在命令行运行 `node install.mjs`）。安装器会：
@@ -113,28 +121,29 @@ node install.mjs --list     # 列出全部支持的工具及本机检测/注册�
 node install.mjs --tool claude,cursor   # 只注册指定的工具（可逗号分隔多个）
 ```
 
-装完按上表「各工具注意事项」操作（如 Codex 需 `/hooks` 信任），然后双击 `音效管理.bat` 打开管理器挑选音效。
+装完按上表「各工具注意事项」操作（如 Codex 需 `/hooks` 信任、Pi 需 `/reload`），然后双击 `音效管理.bat` 打开管理器挑选音效。
 
 ### 方式 C：让 AI Agent 帮你安装
 
 把下面这段提示词直接粘贴给 Kimi Code / Claude Code / Codex 等 AI 编程助手，让它替你完成安装：
 
 ```text
-请帮我安装 kimi-sound-hook（多 agent 工具通用的音效 hook + 可视化管理器）：
+请帮我安装 sound-hook-ui（多 agent 工具通用的音效 hook + 可视化管理器）：
 
 1. 检查本机 node 版本 >= 18，没有就提示我安装 Node.js（https://nodejs.org）并停止。
-2. 把仓库克隆到一个合适的目录：git clone https://github.com/Yang-ChenRui/kimi-sound-hook.git
+2. 把仓库克隆到一个合适的目录：git clone https://github.com/CHERYoung6496/sound-hook-ui.git
    （若目录已存在则改为 git pull；本机没有 git 就下载
-   https://github.com/Yang-ChenRui/kimi-sound-hook/archive/refs/heads/main.zip 并解压）。
+   https://github.com/CHERYoung6496/sound-hook-ui/archive/refs/heads/main.zip 并解压）。
 3. 在仓库目录运行 `node install.mjs --list` 查看支持的工具与检测状态，然后运行
    `node install.mjs` 完成 hook 注册（它会自动检测本机已装的 agent 工具并全部注册，
    写配置前自动备份，重复运行安全；也可以用 --tool 指定只装某几个）。
 4. 运行 `node manager/server.mjs` 启动音效管理器，并打开 http://127.0.0.1:23177
    让我挑音效（或者告诉我双击仓库里的「音效管理.bat」）。
 5. 最后提醒我做收尾：Codex 需要先在 TUI 里执行 /hooks 审查并信任 hook；
-   其他工具新开一个会话即可。hooks 会在会话开始、任务完成、请求审批等事件时播放音效。
+   Pi 需要重启或 /reload；其他工具新开一个会话即可。hooks 会在会话开始、
+   任务完成、请求审批等事件时播放音效。
 
-仓库 README: https://github.com/Yang-ChenRui/kimi-sound-hook
+仓库 README: https://github.com/CHERYoung6496/sound-hook-ui
 ```
 
 ### 使用
@@ -152,10 +161,10 @@ node install.mjs --tool claude,cursor   # 只注册指定的工具（可逗号�
 
 ```
 各 agent 工具的生命周期事件
-        │  （由适配层按各工具的配置格式注册 hook：TOML 或 JSON）
+        │  （由适配层按各工具的配置格式注册 hook：TOML、JSON、YAML 补丁，Pi 为 TS 扩展）
         ▼
 node play-sound.mjs --tool <工具标识>
-        │  （hook payload 从 stdin 读入，按工具归一化为 12 个通用事件名）
+        │  （hook payload 以 JSON 读入，按工具归一化为 12 个通用事件名）
         ▼
 读同目录 sounds.json，挑出该事件配置的 WAV
         │
@@ -163,7 +172,7 @@ node play-sound.mjs --tool <工具标识>
 PowerShell SoundPlayer.PlaySync()   ← 独立最小化窗口播放，异步不阻塞 CLI
 ```
 
-各工具的配置文件位置与格式（TOML `[[hooks]]`、各种 JSON 结构）互不相同，由安装器的适配层统一处理；`sounds.json` 的 12 个事件名不变。
+各工具的配置文件位置与格式（TOML `[[hooks]]`、各种 JSON 结构、桥接补丁、TS 扩展）互不相同，由安装器的适配层统一处理；`sounds.json` 的 12 个事件名不变。
 
 `play-sound.mjs` 与 `sounds.json` 位于同一目录，音效路径全部相对该目录解析，因此仓库克隆到任何位置都能工作。
 
@@ -203,6 +212,7 @@ node tools/download-pack.mjs
 
 ## 路线图
 
+- **DeepSeek Harness、Pi**：已支持，见上方「能力覆盖矩阵」；
 - **Goose、Windsurf**：payload 字段名与现有工具不同，适配器计划中；
 - **OpenCode、Amp**：需要一个胶水插件桥接其扩展机制，计划中；
 - **Aider**：没有 hooks 机制，无法支持。
@@ -214,7 +224,7 @@ node tools/download-pack.mjs
 - [echook](https://github.com/ChanMeng666/echook) —— Claude Code/Cursor/Codex 的音频通知，26 个 hook、TTS、webhook；
 - [claude-code-hooks-sound-system](https://github.com/PCPrincipal67/claude-code-hooks-sound-system)、[bugu](https://github.com/LearnPrompt/bugu) —— Claude Code 生态的 hook 音效方案。
 
-本项目的差异：**多 agent 工具支持**（一套音效配置同时接入 6 个工具，自动检测全装）、**自带零依赖可视化管理 UI**（选音效/试听/保存全自动备份）、**Windows 优先**（bat 一键安装/卸载，双击即用）。
+本项目的差异：**多 agent 工具支持**（一套音效配置同时接入 8 个工具，自动检测全装）、**自带零依赖可视化管理 UI**（选音效/试听/保存全自动备份）、**Windows 优先**（bat 一键安装/卸载，双击即用）。
 
 ## License
 
@@ -226,6 +236,6 @@ node tools/download-pack.mjs
 
 ### English summary
 
-**kimi-sound-hook** adds sound effects to the lifecycle events of six AI coding agents — [Kimi Code](https://github.com/MoonshotAI/kimi-code), Claude Code, Codex CLI, Gemini CLI, Cursor and Continue — via each tool's native hooks system. One shared `sounds.json` maps 12 normalized events (task done, user input, session start/end, permission requests, questions, errors, interrupts, subagent start/stop) to WAV files; per-tool config formats (TOML `[[hooks]]` for Kimi Code, JSON for the rest) and event names are handled by an adapter layer, and every hook invokes the same player as `node "<abs path to play-sound.mjs>" --tool <id>`. It ships with a zero-dependency local web manager (port 23177) to pick, preview and assign sounds per event, six original program-synthesized starter WAVs (MIT), double-click Windows installers/uninstallers that auto-detect installed agents and register them all (with `--tool` and `--list` options) using timestamped config backups, and an optional downloader for a 16-sound anime pack (personal use only). Windows-first (PowerShell `SoundPlayer` backend), Node.js >= 18, no npm dependencies. Paths are derived relative to the repo root, so it works from any clone location.
+**sound-hook-ui** adds sound effects to the lifecycle events of eight AI coding agents — [Kimi Code](https://github.com/MoonshotAI/kimi-code), Claude Code, Codex CLI, Gemini CLI, Cursor, Continue, DeepSeek Harness and Pi — via each tool's hook or extension mechanism (DeepSeek Harness through the official `@deepseek-ai/dsh-hooks-claude-code` bridge plugin, Pi through a small TypeScript extension). One shared `sounds.json` maps 12 normalized events (task done, user input, session start/end, permission requests, questions, errors, interrupts, subagent start/stop) to WAV files; per-tool config formats (TOML `[[hooks]]` for Kimi Code, JSON for most of the rest, a YAML patch for DeepSeek Harness, a TS extension for Pi) and event names are handled by an adapter layer, and every hook invokes the same player as `node "<abs path to play-sound.mjs>" --tool <id>`. It ships with a zero-dependency local web manager (port 23177) to pick, preview and assign sounds per event, six original program-synthesized starter WAVs (MIT), double-click Windows installers/uninstallers that auto-detect installed agents and register them all (with `--tool` and `--list` options) using timestamped config backups, and an optional downloader for a 16-sound anime pack (personal use only). Windows-first (PowerShell `SoundPlayer` backend), Node.js >= 18, no npm dependencies. Paths are derived relative to the repo root, so it works from any clone location.
 
-One-line install on Windows (paste into PowerShell or Windows Terminal): `powershell -ExecutionPolicy Bypass -Command "iex (irm https://raw.githubusercontent.com/Yang-ChenRui/kimi-sound-hook/main/install-remote.ps1)"`. The script downloads the repo to `%USERPROFILE%\kimi-sound-hook`, detects which agents are installed, registers the hooks in all of them, and preserves your custom `sounds.json` and `sounds/` when upgrading. Some security tools block the `irm ... | iex` pipe form; if that happens, use the `iex (irm ...)` form above or download `install-remote.bat` manually. Afterwards double-click `音效管理.bat` (or `sound-manager.bat`) in the install folder to open the sound manager. Tool-specific notes: Codex requires reviewing and trusting the hooks via `/hooks` in its TUI once, Gemini CLI needs v0.26.0+, Cursor hot-reloads its config on save and has no permission-request event, and Claude Code shows registration status in its `/hooks` menu.
+One-line install on Windows (paste into PowerShell or Windows Terminal): `powershell -ExecutionPolicy Bypass -Command "iex (irm https://raw.githubusercontent.com/CHERYoung6496/sound-hook-ui/main/install-remote.ps1)"`. The script downloads the repo to `%USERPROFILE%\sound-hook-ui`, detects which agents are installed, registers the hooks in all of them, and preserves your custom `sounds.json` and `sounds/` when upgrading. Some security tools block the `irm ... | iex` pipe form; if that happens, use the `iex (irm ...)` form above or download `install-remote.bat` manually. Afterwards double-click `音效管理.bat` (or `sound-manager.bat`) in the install folder to open the sound manager. Tool-specific notes: Codex requires reviewing and trusting the hooks via `/hooks` in its TUI once, Gemini CLI needs v0.26.0+, Cursor hot-reloads its config on save and has no permission-request event, Claude Code shows registration status in its `/hooks` menu, DeepSeek Harness requires installing the official bridge plugin first (`dsh plugin --profile web add @deepseek-ai/dsh-hooks-claude-code`), and Pi needs a restart or `/reload` after installation.

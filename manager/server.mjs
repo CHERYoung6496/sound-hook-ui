@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Agent 音效管理器 —— 零依赖本地 Web 服务
-// kimi-sound-hook 支持 Kimi Code / Claude Code / Codex CLI / Gemini CLI / Cursor / Continue；
+// sound-hook-ui 支持 Kimi Code / Claude Code / Codex CLI / Gemini CLI / Cursor / Continue；
 // 本管理器与具体 agent 工具无关，只读写仓库根目录下的 sounds.json，不修改 play-sound.mjs。
 // 所有路径均相对于仓库根目录自动推导，无任何硬编码绝对路径。
 
@@ -216,7 +216,7 @@ function validateConfig(body, previous) {
   // creator / album_visible 不由 UI 控制：优先沿用请求值，否则原样保留旧配置。
   const creator = typeof body.creator === 'string' && body.creator
     ? body.creator
-    : (typeof previous.creator === 'string' && previous.creator ? previous.creator : 'kimi-sound-hook');
+    : (typeof previous.creator === 'string' && previous.creator ? previous.creator : 'sound-hook-ui');
   const albumVisible = typeof body.album_visible === 'boolean'
     ? body.album_visible
     : (typeof previous.album_visible === 'boolean' ? previous.album_visible : true);

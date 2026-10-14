@@ -1,7 +1,7 @@
 {
-  "name": "kimi-sound-hook",
-  "version": "0.2.0",
-  "description": "Sound hooks for Kimi Code, Claude Code, Codex, Gemini CLI, Cursor and Continue — with a zero-dependency web manager (Windows-first)",
+  "name": "sound-hook-ui",
+  "version": "0.3.0",
+  "description": "Sound hooks for Kimi Code, Claude Code, Codex, Gemini CLI, Cursor, Continue, DeepSeek Harness and Pi — with a zero-dependency web manager (Windows-first)",
   "license": "MIT",
   "type": "module",
   "keywords": [
@@ -10,6 +10,9 @@
     "codex",
     "gemini-cli",
     "cursor",
+    "continue",
+    "deepseek-harness",
+    "pi-agent",
     "agent-hooks"
   ],
   "scripts": {

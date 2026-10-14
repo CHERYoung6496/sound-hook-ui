@@ -117,7 +117,7 @@ function normalizeEventValue(v) {
 function blankConfig() {
   const c = {
     enabled: true,
-    creator: 'kimi-sound-hook',
+    creator: 'sound-hook-ui',
     album: '',
     album_emoji: '',
     album_visible: true,
@@ -130,7 +130,7 @@ function blankConfig() {
 function normalizeConfig(cfg) {
   const c = {
     enabled: cfg.enabled !== false,
-    creator: typeof cfg.creator === 'string' ? cfg.creator : 'kimi-sound-hook',
+    creator: typeof cfg.creator === 'string' ? cfg.creator : 'sound-hook-ui',
     album: typeof cfg.album === 'string' ? cfg.album : '',
     album_emoji: typeof cfg.album_emoji === 'string' ? cfg.album_emoji : '',
     album_visible: cfg.album_visible !== false,

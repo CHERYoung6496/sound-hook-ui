@@ -1,17 +1,19 @@
 <#
 .SYNOPSIS
-  kimi-sound-hook 一键远程安装脚本（Windows / PowerShell 5.1+）
+  sound-hook-ui 一键远程安装脚本（Windows / PowerShell 5.1+）
 
 .DESCRIPTION
-  从 GitHub 下载仓库压缩包 → 解压到 %USERPROFILE%\kimi-sound-hook → 自动检测已安装的 agent 工具
-  （kimi / claude / codex / gemini / cursor / continue）并注册音效 hooks。
+  从 GitHub 下载仓库压缩包 → 解压到 %USERPROFILE%\sound-hook-ui → 自动检测已安装的 agent 工具
+  （kimi / claude / codex / gemini / cursor / continue / deepseek / pi）并注册音效 hooks。
   重复运行即升级：自动备份并恢复你的 sounds.json 与 sounds\ 目录（自定义专辑与音效选择不会丢），
-  旧目录改名为 kimi-sound-hook.old-<时间戳> 留作兜底。
+  旧目录改名为 sound-hook-ui.old-<时间戳> 留作兜底。
+  从旧项目 kimi-sound-hook 迁移：若检测到旧安装目录 %USERPROFILE%\kimi-sound-hook 且新目录尚不存在，
+  自动把其中的 sounds.json 与 sounds\ 迁移到新目录（旧目录保留不删，确认无误后可手动删除）。
 
 .EXAMPLE
   用法（一行命令，在 PowerShell 或 Windows Terminal 中粘贴执行）：
 
-  powershell -ExecutionPolicy Bypass -Command "iex (irm https://raw.githubusercontent.com/Yang-ChenRui/kimi-sound-hook/main/install-remote.ps1)"
+  powershell -ExecutionPolicy Bypass -Command "iex (irm https://raw.githubusercontent.com/CHERYoung6496/sound-hook-ui/main/install-remote.ps1)"
 
 .EXAMPLE
   可选参数（一般不需要）：不联网，直接用本地仓库压缩包安装（离线/测试用）
@@ -20,7 +22,7 @@
 
 .NOTES
   卸载：双击安装目录里的 uninstall.bat
-  项目主页：https://github.com/Yang-ChenRui/kimi-sound-hook
+  项目主页：https://github.com/CHERYoung6496/sound-hook-ui
 #>
 
 param(
@@ -49,15 +51,16 @@ if ($PSVersionTable.PSVersion.Major -lt 5) {
   Fail "PowerShell 版本过低（当前 $($PSVersionTable.PSVersion)），需要 5.1 或更高版本。"
 }
 
-$RepoUrl    = 'https://github.com/Yang-ChenRui/kimi-sound-hook'
+$RepoUrl    = 'https://github.com/CHERYoung6496/sound-hook-ui'
 $ZipUrl     = "$RepoUrl/archive/refs/heads/main.zip"
-$ZipPath    = Join-Path $env:TEMP 'kimi-sound-hook-main.zip'
-$TargetDir  = Join-Path $env:USERPROFILE 'kimi-sound-hook'
+$ZipPath    = Join-Path $env:TEMP 'sound-hook-ui-main.zip'
+$TargetDir  = Join-Path $env:USERPROFILE 'sound-hook-ui'
+$LegacyDir  = Join-Path $env:USERPROFILE 'kimi-sound-hook'
 $Timestamp  = Get-Date -Format 'yyyyMMdd-HHmmss'
 $ExtractDir = Join-Path $env:TEMP "ksh-extract-$Timestamp"
 
 Write-Host '============================================================'
-Write-Host ' kimi-sound-hook 一键安装程序'
+Write-Host ' sound-hook-ui 一键安装程序'
 Write-Host " 目标目录：$TargetDir"
 Write-Host '============================================================'
 
@@ -107,21 +110,35 @@ if ($SourceZip) {
 Write-Host ''
 Write-Host "[3/5] 解压安装到 $TargetDir ..." -ForegroundColor Cyan
 
-$IsUpgrade  = Test-Path $TargetDir
+$IsUpgrade   = Test-Path $TargetDir
+$IsMigration = (-not $IsUpgrade) -and (Test-Path $LegacyDir)
+# 备份数据源：新目录优先，其次旧版 kimi-sound-hook 目录（改名迁移场景）
+$PreserveSource = $null
+if ($IsUpgrade) { $PreserveSource = $TargetDir }
+elseif ($IsMigration) { $PreserveSource = $LegacyDir }
 $PreserveDir = Join-Path $env:TEMP "ksh-preserve-$Timestamp"
 
 if ($IsUpgrade) {
   Write-Host '      检测到已有安装，执行升级：先备份你的音效与配置 ...'
+} elseif ($IsMigration) {
+  Write-Host "      检测到旧版安装目录：$LegacyDir"
+  Write-Host '      执行旧目录迁移：先备份你的音效与配置 ...'
+}
+
+if ($PreserveSource) {
   New-Item -ItemType Directory -Path $PreserveDir -Force | Out-Null
-  if (Test-Path (Join-Path $TargetDir 'sounds.json')) {
-    Copy-Item (Join-Path $TargetDir 'sounds.json') $PreserveDir -Force
+  if (Test-Path (Join-Path $PreserveSource 'sounds.json')) {
+    Copy-Item (Join-Path $PreserveSource 'sounds.json') $PreserveDir -Force
     Write-Host "      已备份旧的 sounds.json 到 $PreserveDir"
   }
-  if (Test-Path (Join-Path $TargetDir 'sounds')) {
-    Copy-Item (Join-Path $TargetDir 'sounds') $PreserveDir -Recurse -Force
+  if (Test-Path (Join-Path $PreserveSource 'sounds')) {
+    Copy-Item (Join-Path $PreserveSource 'sounds') $PreserveDir -Recurse -Force
     Write-Host "      已备份旧的 sounds\ 音效库到 $PreserveDir"
   }
-  $OldDir = Join-Path $env:USERPROFILE "kimi-sound-hook.old-$Timestamp"
+}
+
+if ($IsUpgrade) {
+  $OldDir = Join-Path $env:USERPROFILE "sound-hook-ui.old-$Timestamp"
   try {
     Move-Item $TargetDir $OldDir
   } catch {
@@ -137,10 +154,10 @@ try {
   Fail "解压压缩包失败：$($_.Exception.Message)"
 }
 $TopDir = Get-ChildItem $ExtractDir -Directory |
-  Where-Object { $_.Name -like 'kimi-sound-hook-*' } |
+  Where-Object { $_.Name -like 'sound-hook-ui-*' } |
   Select-Object -First 1
 if (-not $TopDir) {
-  Fail '压缩包结构异常：未找到 kimi-sound-hook-main 顶层目录，压缩包可能已损坏，请重试。'
+  Fail '压缩包结构异常：未找到 sound-hook-ui-main 顶层目录，压缩包可能已损坏，请重试。'
 }
 try {
   Move-Item $TopDir.FullName $TargetDir
@@ -149,7 +166,7 @@ try {
 }
 Write-Host '      新版本文件已就位。'
 
-if ($IsUpgrade) {
+if ($PreserveSource) {
   $preservedConfig = Join-Path $PreserveDir 'sounds.json'
   if (Test-Path $preservedConfig) {
     Copy-Item $preservedConfig (Join-Path $TargetDir 'sounds.json') -Force
@@ -161,6 +178,10 @@ if ($IsUpgrade) {
     New-Item -ItemType Directory -Path $destSounds -Force | Out-Null
     Copy-Item (Join-Path $preservedSounds '*') $destSounds -Recurse -Force
     Write-Host '      已恢复你的 sounds\ 音效库（自定义专辑已保留）'
+  }
+  if ($IsMigration) {
+    Write-Host "      已从旧目录 $LegacyDir 迁移你的音效与配置。"
+    Write-Host '      旧目录保留未删除；确认新版本无误后可手动删除。'
   }
 }
 
@@ -184,13 +205,16 @@ if (-not $SourceZip) {
 
 Write-Host ''
 Write-Host '============================================================' -ForegroundColor Green
-Write-Host ' [完成] kimi-sound-hook 安装成功！' -ForegroundColor Green
+Write-Host ' [完成] sound-hook-ui 安装成功！' -ForegroundColor Green
 Write-Host '============================================================' -ForegroundColor Green
 Write-Host " 安装目录：$TargetDir"
+if ($IsMigration) {
+  Write-Host " 旧版目录：$LegacyDir（已迁移音效与配置，目录保留未删，确认无误后可手动删除）"
+}
 Write-Host ''
-Write-Host ' 支持的 agent 工具（6 种）：kimi（Kimi Code）、claude（Claude Code）、'
+Write-Host ' 支持的 agent 工具（8 种）：kimi（Kimi Code）、claude（Claude Code）、'
 Write-Host '   codex（Codex CLI）、gemini（Gemini CLI）、cursor（Cursor）、'
-Write-Host '   continue（Continue cn CLI）。'
+Write-Host '   continue（Continue cn CLI）、deepseek（DeepSeek Harness）、pi（Pi agent）。'
 Write-Host '   上方 install.mjs 的输出列出了实际检测到并已注册 hooks 的工具。'
 Write-Host ''
 Write-Host ' 下一步：'
@@ -201,6 +225,10 @@ Write-Host ''
 Write-Host ' 注意事项：'
 Write-Host '   - Codex CLI 用户：需在 TUI 中执行 /hooks 信任本项目注册的 hooks 后才会生效；'
 Write-Host '   - Cursor 用户：hooks 配置支持热重载，无需重启即可生效。'
+Write-Host '   - DeepSeek Harness 用户：需先执行'
+Write-Host '       dsh plugin --profile web add @deepseek-ai/dsh-hooks-claude-code'
+Write-Host '       安装桥接插件后，hooks 才会生效；'
+Write-Host '   - Pi 用户：安装完成后需在 Pi 中执行 /reload 或重启 Pi，hooks 才会生效。'
 Write-Host ''
 Write-Host ' 卸载方法：双击安装目录里的「uninstall.bat」'
 Write-Host '           （自动备份后从各工具配置中移除音效 hooks，其余配置不动）。'

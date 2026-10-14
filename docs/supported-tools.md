@@ -1,12 +1,12 @@
 # 各工具配置参考
 
-本文档列出 kimi-sound-hook 在每个 agent 工具中的配置文件位置、注册方式与已知限制。所有工具的 hook 命令统一为：
+本文档列出 sound-hook-ui 在每个 agent 工具中的配置文件位置、注册方式与已知限制。所有工具最终调用的播放器命令统一为：
 
 ```
 node "<play-sound.mjs 绝对路径，正斜杠>" --tool <工具标识>
 ```
 
-payload 一律由工具以 JSON 写入 stdin，播放器读取 `hook_event_name` 并按工具归一化为 `sounds.json` 中的 12 个通用事件名（`agent_end`、`input`、`session_start`、`session_end`、`permission_request`、`ask_user_question:start`、`ask_user_question:result`、`agent_end_failure`、`tool_execution_error`、`interrupt`、`subagent_start`、`subagent_stop`）。
+payload 一律以 JSON 传给播放器（hooks 机制下由工具写入 stdin；Pi 由扩展胶水转发），播放器读取 `hook_event_name` 并按工具归一化为 `sounds.json` 中的 12 个通用事件名（`agent_end`、`input`、`session_start`、`session_end`、`permission_request`、`ask_user_question:start`、`ask_user_question:result`、`agent_end_failure`、`tool_execution_error`、`interrupt`、`subagent_start`、`subagent_stop`）。
 
 ## Kimi Code（`kimi`）
 
@@ -48,8 +48,24 @@ payload 一律由工具以 JSON 写入 stdin，播放器读取 `hook_event_name`
 - 格式：JSON
 - 12 个通用事件全覆盖
 
+## DeepSeek Harness（`deepseek`）
+
+- 机制：官方桥接插件 `@deepseek-ai/dsh-hooks-claude-code`，按 Claude Code 方言的 `hooks.json` 注册 hook，并写入 `~/.dsh/profiles/web/cordis.patch.yml` 补丁（`DSH_HOME` 环境变量可覆盖根目录）
+- 前置条件：先运行 `dsh plugin --profile web add @deepseek-ai/dsh-hooks-claude-code` 安装桥接插件
+- 事件缺口：桥接插件仅提供 SessionStart、UserPromptSubmit、PreToolUse、PostToolUse、Stop、SubagentStart、SubagentStop 七个事件，因此 `session_end`、`permission_request`、`ask_user_question:*`、`tool_execution_error`、`interrupt` 不触发
+- 注意：dsh 目前处于 developer preview，后续版本可能有 breaking changes
+- 卸载：`node uninstall.mjs`（可加 `--tool deepseek` 限定）只清理指向本项目 `play-sound.mjs` 的条目；桥接插件本身如需移除，请按该插件的说明处理
+
+## Pi（`pi`）
+
+- 机制：TypeScript 扩展胶水——安装器写入 `~/.pi/agent/extensions/sound-hook-ui/index.ts`，扩展捕获 Pi 事件后调用同一播放器命令（`PI_HOME` 环境变量可覆盖根目录）
+- 生效方式：安装后重启 pi 或执行 `/reload`
+- 事件映射：任务完成 `agent_settled`、会话开始 `session_start`、会话结束 `session_shutdown`、提交输入 `input`、工具出错 `tool_execution_end`（按 `isError` 字段判定）
+- 事件缺口：Pi 没有内置权限系统与提问工具，`permission_request`、`ask_user_question:*` 不触发；也没有中断与子代理事件（`interrupt`、`subagent_start`、`subagent_stop` 不触发）
+- 卸载：`node uninstall.mjs`（可加 `--tool pi` 限定）移除写入的扩展目录 `~/.pi/agent/extensions/sound-hook-ui/`，之后重启 pi 或 `/reload`
+
 ## 备份与卸载
 
 - 安装器/卸载器在改动任何配置文件之前，都会先把它复制为 `<配置文件>.YYYYMMDD-HHMMSS.bak`。
-- 卸载只删除指向本项目 `play-sound.mjs` 的条目，配置中的其他内容原样保留。
+- 卸载只删除指向本项目 `play-sound.mjs` 的条目（Pi 为删除本项目创建的扩展目录），配置中的其他内容原样保留。
 - `node install.mjs --list` / `node uninstall.mjs --list` 可查看全部支持工具的本机检测与注册状态。

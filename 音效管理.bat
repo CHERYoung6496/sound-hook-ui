@@ -1,6 +1,6 @@
 @echo off
 setlocal
-rem kimi-sound-hook sound manager launcher.
+rem sound-hook-ui sound manager launcher.
 rem If the port is already LISTENING, the server is running -> just open the browser.
 
 if "%SOUND_MANAGER_PORT%"=="" set "SOUND_MANAGER_PORT=23177"

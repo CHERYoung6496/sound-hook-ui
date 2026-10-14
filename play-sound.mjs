@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Multi-tool agent CLI sound hook player (kimi/claude/codex/gemini/cursor/continue)
+// Multi-tool agent CLI sound hook player (kimi/claude/codex/gemini/cursor/continue/deepseek/pi)
 // Reads hook payload from stdin, maps events to pi-sound-style names,
 // and plays the configured .wav sound asynchronously.
 
@@ -19,7 +19,15 @@ function log(line) {
   } catch {}
 }
 
-const TOOL_IDS = ['kimi', 'claude', 'codex', 'gemini', 'cursor', 'continue'];
+const TOOL_IDS = ['kimi', 'claude', 'codex', 'gemini', 'cursor', 'continue', 'deepseek', 'pi'];
+
+// The 12 generic sound event names used in sounds.json. Pi payloads carry one
+// of these verbatim in payload.event.
+const GENERIC_EVENTS = new Set([
+  'agent_end', 'input', 'session_start', 'session_end', 'permission_request',
+  'ask_user_question:start', 'ask_user_question:result', 'agent_end_failure',
+  'tool_execution_error', 'interrupt', 'subagent_start', 'subagent_stop',
+]);
 
 // Event values only emitted by Gemini CLI (used for payload-based inference).
 const GEMINI_ONLY_EVENTS = new Set([
@@ -27,7 +35,8 @@ const GEMINI_ONLY_EVENTS = new Set([
 ]);
 
 // Per-tool event mappers: (event, toolName, payload) => sounds.json event name or null.
-// `event` is always payload.hook_event_name across all supported tools.
+// `event` is payload.hook_event_name for every tool except pi, whose mapper
+// reads the generic event name straight from payload.event.
 
 function mapKimiEvent(event, toolName) {
   if (event === 'PreToolUse' && toolName === 'AskUserQuestion') {
@@ -96,6 +105,10 @@ function mapCursorEvent(event, toolName, payload) {
   return null;
 }
 
+function mapPiEvent(event, toolName, payload) {
+  return GENERIC_EVENTS.has(payload?.event) ? payload.event : null;
+}
+
 const EVENT_MAPPERS = {
   kimi: mapKimiEvent,
   claude: mapClaudeEvent,
@@ -103,6 +116,8 @@ const EVENT_MAPPERS = {
   gemini: mapGeminiEvent,
   cursor: mapCursorEvent,
   continue: mapClaudeEvent,
+  deepseek: mapClaudeEvent,
+  pi: mapPiEvent,
 };
 
 function parseToolArg(argv) {
@@ -112,10 +127,13 @@ function parseToolArg(argv) {
   return TOOL_IDS.includes(id) ? id : null;
 }
 
-// Infer the tool from the event value when --tool is absent: cursor uses
-// camelCase, Gemini has its own PascalCase set, everything else falls back
-// to the shared kimi/claude mapping (backwards compatible with old installs).
-function inferTool(event) {
+// Infer the tool when --tool is absent: pi glue extensions send a generic
+// snake_case payload.event (or tool === 'pi'), cursor uses camelCase, Gemini
+// has its own PascalCase set, everything else falls back to the shared
+// kimi/claude mapping (backwards compatible with old installs).
+function inferTool(event, payload) {
+  if (payload?.tool === 'pi') return 'pi';
+  if (GENERIC_EVENTS.has(payload?.event)) return 'pi';
   if (typeof event !== 'string' || event === '') return 'kimi';
   if (/^[a-z]/.test(event)) return 'cursor';
   if (GEMINI_ONLY_EVENTS.has(event)) return 'gemini';
@@ -173,7 +191,7 @@ async function main() {
   const toolName = payload?.tool_name;
 
   const argTool = parseToolArg(process.argv.slice(2));
-  const tool = argTool ?? inferTool(event);
+  const tool = argTool ?? inferTool(event, payload);
   log(`received payload event=${event} tool=${toolName} hook_tool=${tool}${argTool ? '' : ' (inferred)'}`);
 
   const eventName = EVENT_MAPPERS[tool](event, toolName, payload);
